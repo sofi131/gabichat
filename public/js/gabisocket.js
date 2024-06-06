@@ -145,6 +145,78 @@ socket.on('refreshChatList', (data) => {
     });
 });
 
+socket.on('refreshGroupList', (data) => {
+    const sessionId = document.getElementById('sessionId').value;
+    const groups_container = document.getElementById('groups_container');
+
+    data.groups.forEach(group => {
+        if (group.Users.some(user => user.id == sessionId)) {
+
+            // Verificar si ya se muestra en pantalla un chat con el mismo ID de chat
+            const existingContactDiv = document.getElementById(`group-${group.id}`);
+
+            if (existingContactDiv) {
+                // Actualizar el último mensaje y la hora en el contenedor existente
+                const contactMessage = existingContactDiv.querySelector('.group-info p');
+                const contactTimeDiv = existingContactDiv.querySelector('.group-time');
+                const lastMessage = group.Messages[0];
+
+                if (lastMessage) {
+                    contactMessage.textContent = lastMessage.content;
+                    const sentAt = new Date(lastMessage.sent_at);
+                    contactTimeDiv.textContent = sentAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }
+            } else {
+
+                // Create the main group div
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'group';
+                groupDiv.id = `group-${group.id}`;
+                groupDiv.addEventListener('click', () => openGroup(group.id));
+
+                // Create the avatar div
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = 'avatar';
+                avatarDiv.textContent = group.name.charAt(0);
+
+                // Create the group-info div
+                const groupInfoDiv = document.createElement('div');
+                groupInfoDiv.className = 'group-info';
+
+                // Create the h3 element for the group name
+                const groupNameH3 = document.createElement('h3');
+                groupNameH3.textContent = group.name;
+
+                // Create the p element for the group message
+                const groupMessageP = document.createElement('p');
+                const lastMessage = group.Messages[0];
+                groupMessageP.textContent = lastMessage ? lastMessage.content : 'No hay mensajes';
+
+                // Append the h3 and p to the group-info div
+                groupInfoDiv.appendChild(groupNameH3);
+                groupInfoDiv.appendChild(groupMessageP);
+
+                // Create the group-time div
+                const groupTimeDiv = document.createElement('div');
+                groupTimeDiv.className = 'group-time';
+                if (lastMessage) {
+                    const sentAt = new Date(lastMessage.sent_at);
+                    groupTimeDiv.textContent = sentAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }
+
+                // Append all child elements to the main group div
+                groupDiv.appendChild(avatarDiv);
+                groupDiv.appendChild(groupInfoDiv);
+                groupDiv.appendChild(groupTimeDiv);
+
+                // Append the group div to the document body or any other desired parent element
+                groups_container.appendChild(groupDiv);
+            }
+        }
+    })
+
+})
+
 socket.on('refreshChat', (data) => {
     if (data.messages[0].chat_id.toString() == document.getElementById('messageDiv').dataset.chatId) {
         const contactInfoDiv = document.getElementById(`contact-${data.messages[0].chat_id}`);
@@ -171,9 +243,32 @@ socket.on('refreshChat', (data) => {
     }
 });
 
-socket.on('refreshGroupList', (data) => {
+socket.on('refreshGroup', (data) => {
     console.log(data)
-})
+    if (data.messages[0].group_id.toString() == document.getElementById('messageDiv').dataset.chatId) {
+        const contactInfoDiv = document.getElementById(`group-${data.messages[0].group_id}`);
+        const contactNameElement = contactInfoDiv.querySelector('h3');
+        const contactNameText = contactNameElement.textContent;
+        document.getElementById('userHeader').innerHTML = contactNameText;
+
+        const messageDiv = document.getElementById('messageDiv');
+        messageDiv.innerHTML = '';
+
+        data.messages.forEach(message => {
+            const message_container = document.createElement('div');
+            if (message.sender_id == document.getElementById('sessionId').value) {
+                message_container.className = 'message sent';
+            } else {
+                message_container.className = 'message received';
+            }
+            const messageContent = document.createElement('p');
+            const sentAt = new Date(message.sent_at);
+            messageContent.innerHTML = message.content + '<span class="time">' + sentAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '</span>';
+            message_container.appendChild(messageContent);
+            messageDiv.appendChild(message_container);
+        })
+    }
+});
 
 function createChat(userId) {
     document.getElementById('userListModal').style.display = 'none';
@@ -182,14 +277,22 @@ function createChat(userId) {
 
 function openChat(chatId) {
     document.getElementById('messageDiv').dataset.chatId = chatId;
+    document.getElementById('messageDiv').dataset.type = "chat";
     socket.emit('openChat', { chatId });
+}
+
+function openGroup(groupId) {
+    document.getElementById('messageDiv').dataset.chatId = groupId;
+    document.getElementById('messageDiv').dataset.type = "group";
+    socket.emit('openGroup', { groupId });
 }
 
 function sendMessage() {
     const messageText = document.getElementById('messageText').value;
     document.getElementById('messageText').value = '';
     const chatId = document.getElementById('messageDiv').dataset.chatId;
-    socket.emit('newMessage', { messageText, chatId });
+    const type = document.getElementById('messageDiv').dataset.type;
+    socket.emit('newMessage', { messageText, chatId, type });
 }
 
 function addIdToGroup(id) {
@@ -205,14 +308,14 @@ function addIdToGroup(id) {
 }
 
 function newGroup() {
-    const groupName = document.getElementById('groupName');
-    if(groupList.length == 0){
+    const groupName = document.getElementById('groupName').value;
+    if (groupList.length == 0) {
         alert('Se necesita al menos una persona');
     } else {
         users = groupList;
         groupList = [];
         document.getElementById('createGroupModal').style.display = 'none';
-        socket.emit('newGroup', { groupName, users });   
+        socket.emit('newGroup', { groupName, users });
     }
-    
+
 }

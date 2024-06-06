@@ -38,7 +38,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, './views'));
 
 (async () => {
-  await sequelize.sync(/*{ force: true }*/);
+  await sequelize.sync({/* force: true */});
 })();
 
 io.use((socket,next)=>{

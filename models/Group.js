@@ -14,14 +14,9 @@ const Group = sequelize.define(
       defaultValue: Sequelize.NOW
     },
     admin: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references:{
-            model: 'user',
-            key : 'id'
-        }
-        
-      },
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
   },
   {
     tableName: "group",

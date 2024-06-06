@@ -19,8 +19,8 @@ module.exports = (io) => {
     const chats = await getAllChatsWithLastMessage();
     io.emit('refreshChatList', { chats });
 
-    //const groups = await getAllGroupsWithLastMessage();
-    //io.emit('refreshGroupList', { groups });
+    const groups = await getAllGroupsWithLastMessage();
+    io.emit('refreshGroupList', { groups });
 
     socket.on('disconnect', () => {
       const index = onlineUsers.findIndex(user => user.id === id);
@@ -63,19 +63,35 @@ module.exports = (io) => {
       io.to(socket.id).emit('refreshChat', { messages });
     });
 
+    socket.on('openGroup', async (data) => {
+      const messages = await getAllMessagesInGroup(data.groupId);
+      io.to(socket.id).emit('refreshGroup', { messages });
+    });
+
     socket.on('newMessage', async (data) => {
-      await Message.create({ content: data.messageText, sender_id: id, chat_id: data.chatId });
-      const chats = await getAllChatsWithLastMessage();
-      io.emit('refreshChatList', { chats });
-      const messages = await getAllMessagesInChat(data.chatId);
-      io.emit('refreshChat', { messages });
+      if (data.type == "chat") {
+        await Message.create({ content: data.messageText, sender_id: id, chat_id: data.chatId });
+        const chats = await getAllChatsWithLastMessage();
+        io.emit('refreshChatList', { chats });
+        const messages = await getAllMessagesInChat(data.chatId);
+        io.emit('refreshChat', { messages });
+      } else {
+        await Message.create({ content: data.messageText, sender_id: id, group_id: data.chatId });
+        const groups = await getAllGroupsWithLastMessage();
+        io.emit('refreshGroupList', { groups });
+        const messages = await getAllMessagesInGroup(data.chatId);
+        io.emit('refreshGroup', { messages });
+      }
     })
 
     socket.on('newGroup', async (data) => {
       const group = await Group.create({ name: data.groupName, admin: id });
+      await group.addUser(id);
       for (const user of data.users) {
-        await Group_participant.create({ group_id: group.id, user_id: user });
+        await group.addUser(user);
       }
+      const content = username + ' a creado un nuevo grupo!'
+      await Message.create({ content, sender_id: id, group_id: group.id });
       const groups = await getAllGroupsWithLastMessage();
       io.emit('refreshGroupList', { groups });
     })
@@ -154,6 +170,13 @@ async function chatExistsBetweenUsers(userId1, userId2) {
 async function getAllMessagesInChat(chatId) {
   const messages = await Message.findAll({
     where: { chat_id: chatId }
+  });
+  return messages;
+}
+
+async function getAllMessagesInGroup(groupId) {
+  const messages = await Message.findAll({
+    where: { group_id: groupId }
   });
   return messages;
 }
