@@ -21,7 +21,9 @@
         </div>
         <div class="navbar-right">
             <div class="dropdown">
-                <button class="dropbtn" id="profileBtn"><%= username %></button>
+                <button class="dropbtn" id="profileBtn">
+                    <%= username %>
+                </button>
                 <div class="dropdown-content">
                     <a href="#" id="openProfileModal">Mi perfil</a>
                 </div>
@@ -36,20 +38,22 @@
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2>Mi Perfil</h2>
-            <div class="profile-picture">
-                <img id="profileImage" src="uploads/<%= profile_picture %>" alt="Foto de Perfil">
-            </div>
-            <button id="changeProfilePicBtn" class="change-profile-pic-btn">Cambiar Foto de Perfil</button>
-            <input type="file" id="profilePicInput" style="display: none;">
-            <div class="profile-details">
-                <label for="profileName">Nombre:</label>
-                <input type="text" id="profileName" value="<%= username %>">
-                <label for="profileEmail">Email:</label>
-                <input type="email" id="profileEmail" value="<%= email %>">
-                <label for="profilePassword">Nueva contraseña:</label>
-                <input type="password" id="profilePassword">
-            </div>
-            <button id="saveProfileBtn" class="save-profile-btn">Guardar Cambios</button>
+            <form action="" method="post" enctype="multipart/form-data">
+                <div class="profile-picture">
+                    <img id="profileImage" src="uploads/<%= profile_picture %>" alt="uploads/default.jpg">
+                </div>
+                <button id="changeProfilePicBtn" class="change-profile-pic-btn">Cambiar Foto de Perfil</button>
+                <input type="file" id="profilePicInput" name="image" style="display: none;">
+                <div class="profile-details">
+                    <label for="profileName">Nombre:</label>
+                    <input type="text" id="profileName" name="username" value="<%= username %>" required>
+                    <label for="profileEmail">Email:</label>
+                    <input type="email" id="profileEmail" name="email" value="<%= email %>" required>
+                    <label for="profilePassword">Nueva contraseña:</label>
+                    <input type="password" id="profilePassword" name="password" required>
+                </div>
+                <input type="submit" value="Guardar Cambios" id="saveProfileBtn" class="save-profile-btn">
+            </form>
         </div>
     </div>
 

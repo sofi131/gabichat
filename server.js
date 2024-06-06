@@ -8,7 +8,6 @@ const sequelize = require("./config/database");
 const routes = require('./routes/routes');
 const protectedRoutes = require('./routes/protectedRoutes');
 const socketController = require('./controllers/socketController');
-const upload = require('./config/multer');
 
 const app = express();
 const server = http.createServer(app);

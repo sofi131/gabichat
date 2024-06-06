@@ -80,21 +80,19 @@ document.addEventListener("DOMContentLoaded", function() {
         profilePicInput.click();
     }
 
+    let image;
+
     profilePicInput.onchange = function(event) {
         var reader = new FileReader();
         reader.onload = function() {
             profileImage.src = reader.result;
         }
         reader.readAsDataURL(event.target.files[0]);
+        image = event.target.files[0];
     }
 
     // Guardar cambios del perfil
-    saveProfileBtn.onclick = function() {
-        var profileName = document.getElementById("profileName").value;
-        var profileEmail = document.getElementById("profileEmail").value;
-        var profilePassword = document.getElementById("profilePassword").value;
-
-        // Aquí puedes añadir la lógica para guardar los datos en tu base de datos
+    saveProfileBtn.onclick = function() {        
 
         alert("Perfil actualizado correctamente");
 
